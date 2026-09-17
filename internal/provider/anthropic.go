@@ -51,7 +51,7 @@ func (p *Anthropic) Name() string { return p.name }
 // current Claude models reject sampling parameters with a 400.
 func (p *Anthropic) Stream(ctx context.Context, req Request) (Stream, error) {
 	params := anthropic.BetaMessageNewParams{
-		Model:     anthropic.Model(req.Model),
+		Model:     req.Model,
 		MaxTokens: int64(req.MaxTokens),
 	}
 	for _, m := range req.Messages {
