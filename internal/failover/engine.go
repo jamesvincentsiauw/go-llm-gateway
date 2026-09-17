@@ -240,9 +240,10 @@ func (r *runState) send(s string) error {
 }
 
 // EstimateTokens approximates a token count at four bytes per token.
-func EstimateTokens(s string) int {
-	return (len(s) + 3) / 4
-}
+func EstimateTokens(s string) int { return TokensForBytes(len(s)) }
+
+// TokensForBytes is EstimateTokens for a byte count.
+func TokensForBytes(n int) int { return (n + 3) / 4 }
 
 func lastSpace(s string) int {
 	return strings.LastIndexFunc(s, unicode.IsSpace)
