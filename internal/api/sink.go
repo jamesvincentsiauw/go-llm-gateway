@@ -60,7 +60,7 @@ func (b *bufferSink) finish(w http.ResponseWriter, meta responseMeta, res failov
 			"finish_reason": res.FinishReason,
 		}},
 		"usage":     usageJSON(res.Usage),
-		"x_gateway": map[string]any{"upstreams": res.Providers, "failovers": b.failovers},
+		"x_gateway": map[string]any{"upstreams": res.Providers, "failovers": append([]string{}, b.failovers...)},
 	})
 }
 
