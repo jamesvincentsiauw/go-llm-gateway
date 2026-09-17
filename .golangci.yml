@@ -1,0 +1,26 @@
+version: "2"
+
+linters:
+  enable:
+    - errorlint
+    - gocritic
+    - misspell
+    - unconvert
+  settings:
+    errcheck:
+      # Close errors on finished streams and writes to an SSE response have no recovery path.
+      exclude-functions:
+        - (io.Closer).Close
+        - (io.ReadCloser).Close
+        - (github.com/jamesvincentsiauw/go-llm-gateway/internal/provider.Stream).Close
+        - fmt.Fprint
+        - fmt.Fprintf
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/jamesvincentsiauw/go-llm-gateway
