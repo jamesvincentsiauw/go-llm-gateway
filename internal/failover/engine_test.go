@@ -276,6 +276,25 @@ func TestStalledUpstreamFailsOver(t *testing.T) {
 	}
 }
 
+func TestHeartbeatsKeepSlowUpstreamAlive(t *testing.T) {
+	rec := &recorder{}
+	var chunks []provider.Chunk
+	for range 6 {
+		chunks = append(chunks, provider.Chunk{}) // e.g. thinking events with no text
+	}
+	a := &scripted{name: "a", chunks: append(chunks, done("thought it through")...), delay: 30 * time.Millisecond}
+	b := &scripted{name: "b", chunks: done("unused")}
+	e := newEngine(rec)
+	e.StallTimeout = 100 * time.Millisecond
+
+	if _, err := e.Run(context.Background(), baseRequest(), []Target{target(a), target(b)}, rec); err != nil {
+		t.Fatal(err)
+	}
+	if rec.text.String() != "thought it through" || len(b.reqs) != 0 {
+		t.Fatalf("text = %q, b requests = %d", rec.text.String(), len(b.reqs))
+	}
+}
+
 func TestClientDisconnectStopsWithoutFailover(t *testing.T) {
 	rec := &recorder{failText: errors.New("broken pipe")}
 	a := &scripted{name: "a", chunks: done("Hello there friend")}

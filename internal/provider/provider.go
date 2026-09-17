@@ -36,7 +36,7 @@ type Usage struct {
 }
 
 // Chunk is one piece of a streamed response. A chunk carries text, a finish
-// reason, usage, or any combination of them.
+// reason, usage, or nothing at all as a sign that the upstream is still working.
 type Chunk struct {
 	Text         string
 	FinishReason string
