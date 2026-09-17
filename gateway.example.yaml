@@ -1,6 +1,6 @@
 listen: ":8080"
 redis_url: redis://localhost:6379/0
-stall_timeout: 20s          # max wait for the first chunk and between chunks
+stall_timeout: 60s          # max silence from an upstream, including while a model thinks
 default_max_tokens: 4096
 max_tokens_limit: 64000
 breaker:

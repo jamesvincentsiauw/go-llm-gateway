@@ -77,7 +77,7 @@ func Parse(b []byte, getenv func(string) string) (*Config, error) {
 	cfg := Config{
 		Listen:           ":8080",
 		RedisURL:         "redis://localhost:6379/0",
-		StallTimeout:     20 * time.Second,
+		StallTimeout:     60 * time.Second,
 		DefaultMaxTokens: 4096,
 		MaxTokensLimit:   64000,
 		Breaker:          Breaker{Failures: 3, Cooldown: 30 * time.Second},
