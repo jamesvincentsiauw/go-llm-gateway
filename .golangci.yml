@@ -13,6 +13,7 @@ linters:
         - (io.Closer).Close
         - (io.ReadCloser).Close
         - (github.com/jamesvincentsiauw/go-llm-gateway/internal/provider.Stream).Close
+        - (*github.com/redis/go-redis/v9.Client).Close
         - fmt.Fprint
         - fmt.Fprintf
 
