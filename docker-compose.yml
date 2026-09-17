@@ -1,0 +1,30 @@
+services:
+  redis:
+    image: redis:8-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      retries: 10
+
+  fakellm:
+    image: go-llm-gateway:local
+    pull_policy: never          # built by the gateway service
+    entrypoint: ["/usr/local/bin/fakellm", "-addr", ":9000"]
+
+  gateway:
+    image: go-llm-gateway:local
+    build: .
+    command: ["-config", "/etc/gateway/demo.yaml"]
+    volumes:
+      - ./deploy/demo.yaml:/etc/gateway/demo.yaml:ro
+    environment:
+      GATEWAY_DEMO_KEY: ${GATEWAY_DEMO_KEY:-demo-key}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+      fakellm:
+        condition: service_started
+    restart: unless-stopped

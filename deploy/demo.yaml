@@ -1,0 +1,52 @@
+# Local demo: every upstream is the fakellm container, plus Claude when
+# ANTHROPIC_API_KEY is set. Each scenario has its own providers so one
+# scenario's circuit breaker does not affect the others.
+listen: ":8080"
+redis_url: redis://redis:6379/0
+stall_timeout: 5s
+breaker:
+  failures: 3
+  cooldown: 15s
+
+providers:
+  - name: fake-steady
+    type: openai
+    base_url: http://fakellm:9000/v1
+  - name: fake-flaky
+    type: openai
+    base_url: http://fakellm:9000/v1
+  - name: fake-backup
+    type: openai
+    base_url: http://fakellm:9000/v1
+  - name: fake-down-a
+    type: openai
+    base_url: http://fakellm:9000/v1
+  - name: fake-down-b
+    type: openai
+    base_url: http://fakellm:9000/v1
+  - name: claude
+    type: anthropic
+    api_key_env: ANTHROPIC_API_KEY
+    refusal_fallbacks: true
+
+routes:
+  - model: demo
+    targets:
+      - {provider: fake-steady, model: fake}
+  - model: demo-flaky          # drops after 12 words, the backup finishes the answer
+    targets:
+      - {provider: fake-flaky, model: fake-cut-12}
+      - {provider: fake-backup, model: fake}
+  - model: demo-down           # both upstreams fail before any output
+    targets:
+      - {provider: fake-down-a, model: fake-status-503}
+      - {provider: fake-down-b, model: fake-status-529}
+  - model: claude              # without an API key Claude returns 401 and the backup answers
+    targets:
+      - {provider: claude, model: claude-opus-5}
+      - {provider: fake-backup, model: fake}
+
+clients:
+  - name: demo
+    key_env: GATEWAY_DEMO_KEY
+    daily_token_limit: 50000
