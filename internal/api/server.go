@@ -267,10 +267,9 @@ func toAPIError(err error) *apiError {
 	switch {
 	case errors.Is(err, failover.ErrExhausted):
 		return &apiError{Status: http.StatusServiceUnavailable, Type: "upstream_unavailable", Message: "every upstream for this model failed"}
-	case errors.As(err, &perr) && perr.Status >= 400 && perr.Status < 500 && perr.Status != 401 && perr.Status != 403:
+	case errors.As(err, &perr) && perr.Status >= 400 && perr.Status < 500:
 		return &apiError{Status: http.StatusBadRequest, Type: "invalid_request_error", Message: "upstream rejected the request: " + perr.Err.Error()}
 	default:
-		// Upstream auth failures are a gateway misconfiguration, not the caller's fault.
 		return &apiError{Status: http.StatusBadGateway, Type: "upstream_error", Message: "upstream request failed"}
 	}
 }

@@ -77,7 +77,7 @@ func TestOpenAIDroppedStreamIsRetryable(t *testing.T) {
 
 func TestOpenAIStatusErrors(t *testing.T) {
 	p := fakeOpenAI(t)
-	tests := map[string]bool{"fake-status-503": true, "fake-status-429": true, "fake-status-400": false, "fake-status-401": false}
+	tests := map[string]bool{"fake-status-503": true, "fake-status-429": true, "fake-status-400": false, "fake-status-401": true, "fake-status-404": false}
 	for model, retryable := range tests {
 		_, err := p.Stream(context.Background(), userRequest(model))
 		var perr *provider.Error

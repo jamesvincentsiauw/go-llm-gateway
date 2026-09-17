@@ -76,9 +76,14 @@ func (e *Error) Error() string {
 func (e *Error) Unwrap() error { return e.Err }
 
 // RetryableStatus reports whether another provider may succeed where this
-// status failed: rate limits, timeouts and server-side errors.
+// status failed. That includes 401 and 403, which point at this provider's
+// credentials rather than at the request.
 func RetryableStatus(status int) bool {
-	return status == 408 || status == 409 || status == 429 || status >= 500
+	switch status {
+	case 401, 403, 408, 409, 429:
+		return true
+	}
+	return status >= 500
 }
 
 // IsRetryable reports whether err is worth sending to the next provider.

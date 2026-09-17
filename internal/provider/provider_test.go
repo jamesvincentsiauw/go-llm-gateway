@@ -21,7 +21,7 @@ func TestIsRetryable(t *testing.T) {
 		{"dropped connection", io.ErrUnexpectedEOF, true},
 		{"retryable provider error", &Error{Status: 503, Retryable: true}, true},
 		{"client error", &Error{Status: 400, Retryable: false}, false},
-		{"wrapped provider error", fmt.Errorf("open: %w", &Error{Status: 401}), false},
+		{"wrapped provider error", fmt.Errorf("open: %w", &Error{Status: 422}), false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -33,7 +33,7 @@ func TestIsRetryable(t *testing.T) {
 }
 
 func TestRetryableStatus(t *testing.T) {
-	for status, want := range map[int]bool{400: false, 401: false, 404: false, 408: true, 409: true, 429: true, 500: true, 529: true} {
+	for status, want := range map[int]bool{400: false, 401: true, 403: true, 404: false, 422: false, 408: true, 409: true, 429: true, 500: true, 529: true} {
 		if got := RetryableStatus(status); got != want {
 			t.Errorf("RetryableStatus(%d) = %v, want %v", status, got, want)
 		}
