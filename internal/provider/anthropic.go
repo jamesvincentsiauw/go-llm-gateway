@@ -112,8 +112,7 @@ func (s *anthropicStream) Next() bool {
 			s.stopped = true
 			continue
 		}
-		// Thinking and ping events carry no text but show the upstream is alive,
-		// which keeps the stall timeout from firing while the model reasons.
+		// Events without text, such as thinking blocks, still show the upstream is alive.
 		s.chunk = Chunk{}
 		return true
 	}

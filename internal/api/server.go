@@ -28,8 +28,7 @@ type Client struct {
 	DailyTokenLimit int
 }
 
-// Server handles gateway requests. Clients are keyed by the SHA-256 of their
-// API key so raw keys are not kept in memory after startup.
+// Server handles gateway requests. Clients are keyed by the SHA-256 of their API key.
 type Server struct {
 	Routes           map[string][]failover.Target
 	Clients          map[[32]byte]Client
