@@ -6,6 +6,41 @@ An OpenAI-compatible gateway in Go that sits in front of several LLM providers. 
 
 It also enforces per-client daily token quotas in Redis, trips a circuit breaker on providers that keep failing, and exports Prometheus metrics. Providers today are Claude, through the official [Anthropic Go SDK](https://github.com/anthropics/anthropic-sdk-go), and anything that speaks the OpenAI chat completions API.
 
+## How a request moves through it
+
+```mermaid
+flowchart LR
+    C[Client] -->|POST /v1/chat/completions| API
+    subgraph GW[gateway]
+        API[api.Server<br/>auth, validate, pick route by model]
+        Q[quota.Limiter]
+        ENG[failover.Engine<br/>stall watchdog, word hold-back]
+        BR[circuit breaker<br/>one per provider]
+        AD[provider adapters]
+        SK[sink<br/>SSE stream or buffered JSON]
+        M[metrics registry]
+    end
+    API -->|1. reserve worst case| Q
+    Q -->|Lua reserve and settle| R[(Redis)]
+    API -->|2. run route targets in order| ENG
+    ENG -->|skip if open| BR
+    ENG --> AD
+    AD --> P1[Claude Messages API]
+    AD --> P2[OpenAI-compatible API]
+    ENG -->|text up to the last space| SK
+    SK --> C
+    API -->|3. settle to reported usage| Q
+    API -.-> M
+    ENG -.-> M
+    M -->|GET /metrics| PR[Prometheus]
+```
+
+1. The server looks up the client by the SHA-256 of its API key and maps the `model` field to a route: an ordered list of provider and model pairs.
+2. The quota limiter reserves input estimate plus `max_tokens` in Redis before any provider is called.
+3. The failover engine walks the route. It skips providers whose breaker is open, streams from the first one that answers, and moves to the next on a drop, a stall or a retryable status.
+4. Text reaches the client through a sink, which writes SSE chunks for streaming requests or one JSON body otherwise.
+5. When the answer ends, the reservation is settled to the usage the providers reported.
+
 ## Failing over mid-stream
 
 Switching providers is easy before the first byte reaches the client. After that, a dropped connection usually leaves the client with half an answer and a request to start over. This gateway handles the second case too.
